@@ -136,8 +136,11 @@ const SearchController = {
         <div class="popup-address">${UIComponents.escapeHtml(placeName)}</div>
       `);
 
+      // Create custom search marker element with bicycle icon
+      const markerElement = MapController.createCustomMarkerElement(true);
+
       this.currentSearchMarker = new mapboxgl.Marker({
-        color: '#8e44ad'
+        element: markerElement
       })
         .setLngLat([lng, lat])
         .setPopup(popup)

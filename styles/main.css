@@ -287,11 +287,6 @@ body {
   box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
 }
 
-.location-icon::after {
-  content: '🚲';
-  font-size: 16px;
-}
-
 .location-details {
   flex: 1;
   min-width: 0;
@@ -531,4 +526,25 @@ body {
 
 .mapboxgl-ctrl-top-right .mapboxgl-ctrl-group:not(:first-child) {
   display: none !important;
+}
+
+/* ===== CUSTOM MAP MARKERS ===== */
+.custom-marker {
+  cursor: pointer;
+  z-index: 1;
+}
+
+.custom-marker .marker-pin {
+  position: relative;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.custom-marker:hover .marker-pin {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.custom-marker .marker-icon {
+  pointer-events: none;
+  user-select: none;
 }

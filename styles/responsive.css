@@ -110,10 +110,6 @@
     margin-right: 10px;
   }
 
-  .location-icon::after {
-    font-size: 14px;
-  }
-
   .location-name {
     font-size: 14px;
   }
@@ -140,10 +136,6 @@
   only screen and (min-device-pixel-ratio: 2),
   only screen and (min-resolution: 192dpi),
   only screen and (min-resolution: 2dppx) {
-  .location-icon::after {
-    transform: translateZ(0);
-  }
-
   .search-icon {
     transform: translateY(-50%) translateZ(0);
   }
