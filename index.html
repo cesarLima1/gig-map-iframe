@@ -539,10 +539,506 @@
     </div>
 
     <script>
-      // Initialize Mapbox
+      // ===== GLOBAL CONFIGURATION =====
       mapboxgl.accessToken =
         'pk.eyJ1IjoiZ2lybHNpbmdlYXIiLCJhIjoiY2xwcmF1ajNlMDdiOTJpb2xpcjI5dXF3YiJ9.gAAFitjNaaaHyWJ86qdG9A';
 
+      // Global variable to store processed data
+      let globalGigData = [];
+      let isLoadingData = false;
+
+      // Google Sheet URL converted to CSV
+      // To get the CSV URL from your Google Sheet:
+      // 1. Go to your Google Sheet
+      // 2. File > Share > Publish to web
+      // 3. Select "Comma-separated values (.csv)"
+      // 4. Copy the generated URL
+      
+      // Original URL (with CORS blocked)
+      const ORIGINAL_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1ygPq1Cfz0zW1pPCvdFB_R4yTh_XmKman7Pv__eVJePM/export?format=csv&gid=719830008';
+      
+      // URL with CORS proxy (solution to CORS error)
+      const GOOGLE_SHEET_CSV_URL = `https://api.allorigins.win/get?url=${encodeURIComponent(ORIGINAL_SHEET_URL)}`;
+      
+      // Alternative CORS proxy URLs (in case the first one fails)
+      const CORS_PROXIES = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(ORIGINAL_SHEET_URL)}`,
+        `https://corsproxy.io/?${encodeURIComponent(ORIGINAL_SHEET_URL)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ORIGINAL_SHEET_URL)}`
+      ];
+
+      // ===== SAMPLE DATA FOR TESTING =====
+      const sampleGigData = [
+        {
+          id: 1,
+          programType: 'Pedal Power',
+          address: 'Bernardsville Municipal Pool 141 Seney Drive',
+          address2: '',
+          city: 'Bernardsville',
+          state: 'NJ',
+          zip: '07924',
+          ageRange: '5-7',
+          meetingDay: 'Sunday',
+          meetingTime: '9:00-10:30am',
+          region: 'Raritan New Jersey',
+          registrationStatus: 'Register Now',
+          acceptingVolunteers: 'Coach',
+          coordinates: null // Will be filled with geocoding
+        },
+        {
+          id: 2,
+          programType: 'Pedal Power',
+          address: 'Bernardsville Municipal Pool 141 Seney Drive',
+          address2: '',
+          city: 'Bernardsville',
+          state: 'NJ',
+          zip: '07924',
+          ageRange: '8-10',
+          meetingDay: 'Sunday',
+          meetingTime: '9:00-10:30am',
+          region: 'Raritan New Jersey',
+          registrationStatus: 'Register Now',
+          acceptingVolunteers: 'Coach',
+          coordinates: null
+        },
+        {
+          id: 3,
+          programType: 'Camp GiG',
+          address: 'Blue Ridge Cyclery at Libbie Mill 5001 Libbie Mill E Blvd',
+          address2: '',
+          city: 'Richmond',
+          state: 'VA',
+          zip: '23230',
+          ageRange: '11+',
+          meetingDay: '6/9/2025-6/13/2025',
+          meetingTime: '9-1pm',
+          region: 'Greater Richmond',
+          registrationStatus: 'Register Now',
+          acceptingVolunteers: 'Coach',
+          coordinates: null
+        },
+        {
+          id: 4,
+          programType: 'Camp GiG',
+          address: 'Blue Ridge Cyclery at Libbie Mill 5001 Libbie Mill E Blvd',
+          address2: '',
+          city: 'Richmond',
+          state: 'VA',
+          zip: '23230',
+          ageRange: '11+',
+          meetingDay: '6/16/2025-6/20/2025',
+          meetingTime: '9-1pm',
+          region: 'Greater Richmond',
+          registrationStatus: 'Register Now',
+          acceptingVolunteers: 'Coach',
+          coordinates: null
+        }
+      ];
+
+      // ===== FUNCTION TO FETCH AND PROCESS GOOGLE SHEET DATA =====
+      async function fetchGoogleSheetData() {
+        try {
+          isLoadingData = true;
+          console.log('📥 Fetching data from Google Sheet...');
+          
+          // Show loading indicator
+          updateLoadingState(true);
+
+          let csvText = null;
+          let lastError = null;
+
+          // Try with different CORS proxies
+          for (let i = 0; i < CORS_PROXIES.length; i++) {
+            try {
+              console.log(`🔄 Trying proxy ${i + 1}/${CORS_PROXIES.length}...`);
+              
+              const response = await fetch(CORS_PROXIES[i]);
+              
+              if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status}`);
+              }
+
+              const data = await response.json();
+              
+              // Handle different proxy response formats
+              if (data.contents) {
+                // allorigins.win format
+                csvText = data.contents;
+                
+                // Check if it's a Data URL (data:text/csv;base64,...)
+                if (csvText.startsWith('data:')) {
+                  console.log('🔄 Detected Data URL, extracting base64...');
+                  const base64Index = csvText.indexOf('base64,');
+                  if (base64Index !== -1) {
+                    const base64Content = csvText.substring(base64Index + 7); // 7 = "base64,".length
+                    try {
+                      csvText = atob(base64Content);
+                      console.log('✅ Data URL decoded successfully');
+                    } catch (e) {
+                      console.error('❌ Error decoding Data URL base64:', e);
+                      throw new Error('Error decoding Data URL');
+                    }
+                  } else {
+                    throw new Error('Data URL without base64 not supported');
+                  }
+                }
+                // Check if it comes in pure base64 (without Data URL)
+                else if (data.status && data.status.content_type && 
+                    data.status.content_type.includes('text') === false) {
+                  console.log('🔄 Decoding base64 content...');
+                  try {
+                    csvText = atob(data.contents);
+                  } catch (e) {
+                    console.warn('⚠️ Error decoding base64, trying as plain text');
+                  }
+                }
+                // Check if it looks like pure base64 (contains typical base64 characters)
+                else if (csvText && !csvText.includes(',') && /^[A-Za-z0-9+/=]+$/.test(csvText.replace(/\s/g, ''))) {
+                  console.log('🔄 Detected pure base64 content, decoding...');
+                  try {
+                    csvText = atob(csvText);
+                  } catch (e) {
+                    console.warn('⚠️ Error decoding detected base64');
+                  }
+                }
+                
+              } else if (typeof data === 'string') {
+                // Direct response - check if it's Data URL too
+                csvText = data;
+                if (csvText.startsWith('data:')) {
+                  console.log('🔄 Detected Data URL in direct response...');
+                  const base64Index = csvText.indexOf('base64,');
+                  if (base64Index !== -1) {
+                    const base64Content = csvText.substring(base64Index + 7);
+                    try {
+                      csvText = atob(base64Content);
+                    } catch (e) {
+                      console.error('❌ Error decoding direct Data URL:', e);
+                    }
+                  }
+                }
+              } else if (data.data) {
+                // Another possible format
+                csvText = data.data;
+              } else {
+                throw new Error('Unrecognized response format');
+              }
+              
+              // If we get here, we succeeded
+              console.log('✅ Data obtained successfully with proxy', i + 1);
+              console.log('📋 Content type received:', typeof csvText);
+              console.log('📄 First 200 characters:', csvText ? csvText.substring(0, 200) : 'null');
+              console.log('📊 Content length:', csvText ? csvText.length : 0);
+
+              break;
+              
+            } catch (error) {
+              console.warn(`⚠️ Error with proxy ${i + 1}:`, error.message);
+              lastError = error;
+              
+              // If it's not the last proxy, continue
+              if (i < CORS_PROXIES.length - 1) {
+                console.log('🔄 Trying next proxy...');
+                continue;
+              }
+            }
+          }
+
+          // If we couldn't get data with any proxy
+          if (!csvText) {
+            throw new Error(`Could not get data with any proxy. Last error: ${lastError?.message}`);
+          }
+          
+          return new Promise((resolve, reject) => {
+            Papa.parse(csvText, {
+              header: true,
+              skipEmptyLines: true,
+              transformHeader: function(header) {
+                // Clean and normalize column names
+                return header.trim()
+                  .replace(/\s+/g, '')
+                  .replace(/([A-Z])/g, (match, letter, index) => {
+                    return index > 0 ? letter.toLowerCase() : letter.toLowerCase();
+                  });
+              },
+              complete: function(results) {
+                if (results.errors.length > 0) {
+                  console.error('❌ CSV parsing errors:', results.errors);
+                  reject(new Error('Error parsing CSV data'));
+                  return;
+                }
+                console.log(results.data);
+                console.log('✅ Data parsed successfully:', results.data.length, 'rows');
+                resolve(results.data);
+              },
+              error: function(error) {
+                console.error('❌ Papa Parse error:', error);
+                reject(error);
+              }
+            });
+          });
+
+        } catch (error) {
+          console.error('❌ Error fetching Google Sheet data:', error);
+          throw error;
+        } finally {
+          isLoadingData = false;
+          updateLoadingState(false);
+        }
+      }
+
+      // ===== FUNCTION TO PROCESS AND NORMALIZE DATA =====
+      function processSheetData(rawData) {
+        console.log('🔄 Processing data...');
+        
+        return rawData.map((row, index) => {
+          // Map columns according to your structure
+          const processedRow = {
+            id: index + 1,
+            programType: row.programtype || row['Program Type'] || '',
+            address: row.address || row['Address'] || '',
+            address2: row.address2 || row['Address 2'] || '',
+            city: row.city || row['City'] || '',
+            state: row.state || row['State'] || '',
+            zip: row.zip || row['Zip'] || '',
+            ageRange: row.agerange || row['Age Range'] || '',
+            meetingDay: row.meetingday || row['Meeting Day'] || '',
+            meetingTime: row.meetingtime || row['Meeting Time'] || '',
+            region: row.region || row['Region'] || '',
+            registrationStatus: row.registrationstatus || row['Registration Status'] || '',
+            acceptingVolunteers: row.acceptingvolunteers || row['Accepting Volunteers'] || '',
+            coordinates: null // Will be filled with geocoding
+          };
+          
+          return processedRow;
+        }).filter(row => row.address && row.city && row.state); // Filter rows with essential data
+      }
+
+      // ===== FUNCTION TO GEOCODE ADDRESSES =====
+      async function geocodeAddress(address, city, state, zip) {
+        try {
+          // Build complete address
+          const fullAddress = `${address}${address ? ', ' : ''}${city}, ${state} ${zip}`.trim();
+          
+          // Mapbox Geocoding API URL
+          const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=${mapboxgl.accessToken}&country=US&limit=1`;
+          
+          const response = await fetch(geocodingUrl);
+          
+          if (!response.ok) {
+            throw new Error(`Geocoding error: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.features && data.features.length > 0) {
+            const coordinates = data.features[0].center; // [lng, lat]
+            console.log(`✅ Geocoded: ${fullAddress} -> [${coordinates[0]}, ${coordinates[1]}]`);
+            return coordinates;
+          } else {
+            console.warn(`⚠️ No coordinates found for: ${fullAddress}`);
+            return null;
+          }
+          
+        } catch (error) {
+          console.error(`❌ Error geocoding ${address}:`, error);
+          return null;
+        }
+      }
+
+      // ===== FUNCTION TO GEOCODE ALL DATA =====
+      async function geocodeAllData(data) {
+        console.log('🗺️ Starting geocoding of', data.length, 'locations...');
+        
+        const geocodedData = [];
+        
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          
+          // Add small delay to avoid rate limits
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
+          const coordinates = await geocodeAddress(
+            item.address,
+            item.city,
+            item.state,
+            item.zip
+          );
+          
+          geocodedData.push({
+            ...item,
+            coordinates: coordinates
+          });
+          
+          // Update progress
+          const progress = Math.round(((i + 1) / data.length) * 100);
+          console.log(`📍 Geocoding progress: ${progress}% (${i + 1}/${data.length})`);
+        }
+        
+        console.log('✅ Geocoding completed');
+        return geocodedData;
+      }
+
+      // ===== MAIN FUNCTION TO LOAD AND PROCESS DATA =====
+      async function loadGigData(useSheetData = true) {
+        try {
+          let rawData;
+          
+          if (useSheetData) {
+            // Try to load data from Google Sheet
+            try {
+              rawData = await fetchGoogleSheetData();
+            } catch (error) {
+              console.warn('⚠️ Error loading Google Sheet, using sample data:', error);
+              rawData = sampleGigData;
+              useSheetData = false;
+            }
+          } else {
+            rawData = sampleGigData;
+          }
+          
+          // Process data
+          const processedData = useSheetData ? processSheetData(rawData) : rawData;
+          
+          // Geocode addresses
+          const geocodedData = await geocodeAllData(processedData);
+          
+          // Store in global variable
+          globalGigData = geocodedData;
+          
+          console.log('🎉 Data loaded successfully:', globalGigData.length, 'programs');
+          
+          // Update UI
+          updateLocationsList(globalGigData);
+          updateMapMarkers(globalGigData);
+          
+          return globalGigData;
+          
+        } catch (error) {
+          console.error('❌ Error loading data:', error);
+          
+          // Fallback to sample data
+          if (useSheetData) {
+            console.log('🔄 Trying with sample data...');
+            return await loadGigData(false);
+          }
+          
+          throw error;
+        }
+      }
+
+      // ===== FUNCTION TO UPDATE LOADING STATE =====
+      function updateLoadingState(isLoading) {
+        const chapterInfo = document.querySelector('.chapter-info-text h3');
+        const chapterSubtext = document.querySelector('.chapter-info-text p');
+        
+        if (isLoading) {
+          chapterInfo.textContent = 'Loading data...';
+          chapterSubtext.textContent = 'Getting programs from Google Sheets';
+        }
+      }
+
+      // ===== FUNCTION TO UPDATE LOCATIONS LIST =====
+      function updateLocationsList(data) {
+        const locationsList = document.querySelector('.locations-list');
+        const chapterInfo = document.querySelector('.chapter-info-text h3');
+        const chapterSubtext = document.querySelector('.chapter-info-text p');
+        
+        // Update counter
+        chapterInfo.textContent = `${data.length} Programs Found`;
+        chapterSubtext.textContent = 'Girls in Gear programs near you!';
+        
+        // Clear existing list
+        locationsList.innerHTML = '';
+        
+        // Add new elements
+        data.forEach((program) => {
+          const locationItem = document.createElement('div');
+          locationItem.className = 'location-item';
+          locationItem.innerHTML = `
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">${program.programType} - ${program.ageRange}</div>
+              <div class="location-address">${program.address}, ${program.city}, ${program.state} ${program.zip}</div>
+              <div class="location-contact">${program.meetingDay} | ${program.meetingTime}</div>
+              <div class="location-website" style="color: #00bcd4; font-weight: 600;">
+                ${program.region} | ${program.registrationStatus}
+              </div>
+            </div>
+            <div class="expand-arrow">›</div>
+          `;
+          
+          // Add click event
+          locationItem.addEventListener('click', function() {
+            if (program.coordinates) {
+              map.flyTo({
+                center: program.coordinates,
+                zoom: 12,
+                duration: 1000
+              });
+            }
+          });
+          
+          locationsList.appendChild(locationItem);
+        });
+      }
+
+      // ===== FUNCTION TO UPDATE MAP MARKERS =====
+      function updateMapMarkers(data) {
+        // Filter data with valid coordinates
+        const validData = data.filter(program => program.coordinates);
+        
+        console.log(`📍 Adding ${validData.length} markers to map`);
+        
+        validData.forEach((program) => {
+          // Create popup
+          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <div class="popup-title">${program.programType}</div>
+            <div class="popup-address">${program.address}<br>${program.city}, ${program.state} ${program.zip}</div>
+            <div class="popup-contact">📅 ${program.meetingDay}</div>
+            <div class="popup-contact">⏰ ${program.meetingTime}</div>
+            <div class="popup-contact">👥 Ages: ${program.ageRange}</div>
+            <div class="popup-contact">📍 ${program.region}</div>
+            <button class="view-directions" onclick="openDirections('${program.address}, ${program.city}, ${program.state} ${program.zip}')">
+              View Directions
+            </button>
+          `);
+
+          // Create marker
+          const marker = new mapboxgl.Marker({
+            color: '#00BCD4'
+          })
+            .setLngLat(program.coordinates)
+            .setPopup(popup)
+            .addTo(map);
+        });
+      }
+
+      // ===== FUNCTION TO OPEN DIRECTIONS =====
+      function openDirections(address) {
+        const encodedAddress = encodeURIComponent(address);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+      }
+
+      // ===== SEARCH FUNCTION =====
+      function searchPrograms(query) {
+        if (!query.trim()) {
+          updateLocationsList(globalGigData);
+          return;
+        }
+        
+        const filtered = globalGigData.filter(program => {
+          const searchText = `${program.programType} ${program.address} ${program.city} ${program.state} ${program.region} ${program.ageRange}`.toLowerCase();
+          return searchText.includes(query.toLowerCase());
+        });
+        
+        updateLocationsList(filtered);
+        console.log(`🔍 Search "${query}": ${filtered.length} results`);
+      }
+
+      // ===== MAP INITIALIZATION =====
       const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/girlsingear/cmbica3mo006k01s6a8in69g5',
@@ -551,44 +1047,17 @@
         attributionControl: false
       });
 
-      // Sample locations for demonstration
-      const sampleLocations = [
-        {
-          name: 'Girls on the Run Southcentral Alaska',
-          address: 'Anchorage, Matanuska-Susitna',
-          phone: '(907) 306-0789',
-          website: 'www.gotrsouthcentalak.org',
-          coordinates: [-149.9003, 61.2181]
-        },
-        {
-          name: 'Girls on the Run Alaska',
-          address: 'Anchorage, Matanuska-Susitna',
-          phone: '(907) 306-0789',
-          website: 'www.gotrsouthcentalak.org',
-          coordinates: [-149.8003, 61.1181]
+      // ===== EVENTS AND INITIALIZATION =====
+      map.on('load', async function () {
+        console.log('🗺️ Map loaded, starting data loading...');
+        
+        // Load data when map loads
+        try {
+          await loadGigData(true);
+        } catch (error) {
+          console.error('❌ Critical error loading data:', error);
+          alert('Error loading data. Please contact administrator.');
         }
-      ];
-
-      map.on('load', function () {
-        // Add sample markers
-        sampleLocations.forEach((location) => {
-          // Create popup
-          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                        <div class="popup-title">${location.name}</div>
-                        <div class="popup-address">${location.address}</div>
-                        <div class="popup-contact">📞 ${location.phone}</div>
-                        <div class="popup-contact">🌐 ${location.website}</div>
-                        <button class="view-directions">View Directions</button>
-                    `);
-
-          // Create marker
-          const marker = new mapboxgl.Marker({
-            color: '#00BCD4'
-          })
-            .setLngLat(location.coordinates)
-            .setPopup(popup)
-            .addTo(map);
-        });
       });
 
       // Reset map functionality
@@ -598,23 +1067,160 @@
           zoom: 3.5,
           duration: 1000
         });
+        
+        // Reset search
+        document.querySelector('.search-input').value = '';
+        updateLocationsList(globalGigData);
       });
 
-      // Search functionality placeholder
+      // Search functionality
       document.querySelector('.search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
-          // Implement search functionality here
-          console.log('Search for:', this.value);
+          searchPrograms(this.value);
         }
       });
 
-      // Location item click functionality
-      document.querySelectorAll('.location-item').forEach((item) => {
-        item.addEventListener('click', function () {
-          // Implement location selection here
-          console.log('Selected location:', this.querySelector('.location-name').textContent);
-        });
+      // Search on input
+      document.querySelector('.search-input').addEventListener('input', function (e) {
+        searchPrograms(this.value);
       });
+
+      // ===== DEVELOPMENT AND DEBUG FUNCTIONS =====
+      
+      // Function to manually reload data
+      window.reloadData = async function() {
+        console.log('🔄 Manually reloading data...');
+        await loadGigData(true);
+      };
+      
+      // Function to use sample data
+      window.useSampleData = async function() {
+        console.log('🧪 Loading sample data...');
+        await loadGigData(false);
+      };
+      
+      // Function to export current data
+      window.exportData = function() {
+        console.log('📤 Current data:', globalGigData);
+        const dataStr = JSON.stringify(globalGigData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'gig-data.json';
+        link.click();
+      };
+
+      // Function to test direct sheet access (for debug)
+      window.testDirectAccess = async function() {
+        console.log('🧪 Testing direct Google Sheet access...');
+        try {
+          const response = await fetch(ORIGINAL_SHEET_URL);
+          console.log('✅ Direct access works!', response.status);
+          const text = await response.text();
+          console.log('📄 Data:', text.substring(0, 200) + '...');
+        } catch (error) {
+          console.error('❌ Direct access error:', error);
+        }
+      };
+
+      // Function to test proxies individually
+      window.testProxies = async function() {
+        console.log('🧪 Testing all CORS proxies...');
+        
+        for (let i = 0; i < CORS_PROXIES.length; i++) {
+          try {
+            console.log(`🔍 Testing proxy ${i + 1}: ${CORS_PROXIES[i]}`);
+            const response = await fetch(CORS_PROXIES[i]);
+            const data = await response.json();
+            console.log(`✅ Proxy ${i + 1} works!`, data);
+          } catch (error) {
+            console.error(`❌ Proxy ${i + 1} failed:`, error);
+          }
+        }
+      };
+
+      // Function to get sheet info
+      window.getSheetInfo = function() {
+        console.log('📋 Google Sheet Information:');
+        console.log('🔗 Original URL:', ORIGINAL_SHEET_URL);
+        console.log('🔗 Proxy URL:', GOOGLE_SHEET_CSV_URL);
+        console.log('📊 Data loaded:', globalGigData.length, 'programs');
+        console.log('🗺️ With coordinates:', globalGigData.filter(d => d.coordinates).length);
+      };
+
+      // Function to manually test decoding
+      window.testBase64Decode = async function() {
+        console.log('🧪 Testing manual decoding...');
+        try {
+          const response = await fetch(CORS_PROXIES[0]);
+          const data = await response.json();
+          
+          console.log('📋 Complete proxy response:', data);
+          
+          if (data.contents) {
+            console.log('📄 Original content (first 100 chars):', data.contents.substring(0, 100));
+            
+            let csvText = data.contents;
+            
+            // Check if it's Data URL
+            if (csvText.startsWith('data:')) {
+              console.log('🔍 It\'s a Data URL!');
+              const base64Index = csvText.indexOf('base64,');
+              if (base64Index !== -1) {
+                console.log('🔍 Found base64 marker at position:', base64Index);
+                const base64Content = csvText.substring(base64Index + 7);
+                console.log('📄 Base64 content (first 100 chars):', base64Content.substring(0, 100));
+                
+                try {
+                  const decoded = atob(base64Content);
+                  console.log('✅ Content decoded successfully!');
+                  console.log('📄 Decoded CSV (first 500 chars):', decoded.substring(0, 500));
+                  console.log('📊 Decoded length:', decoded.length);
+                  
+                  // Try parsing with Papa Parse
+                  Papa.parse(decoded, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                      console.log('✅ Papa Parse successful!');
+                      console.log('📊 Number of rows:', results.data.length);
+                      console.log('📋 Headers found:', results.meta.fields);
+                      if (results.data.length > 0) {
+                        console.log('📄 First row:', results.data[0]);
+                        console.log('📄 Second row:', results.data[1]);
+                      }
+                    },
+                    error: function(error) {
+                      console.error('❌ Papa Parse error:', error);
+                    }
+                  });
+                  
+                } catch (e) {
+                  console.error('❌ Error decoding base64 from Data URL:', e);
+                }
+              } else {
+                console.warn('⚠️ Data URL without base64 marker');
+              }
+            } else {
+              console.log('🔍 Looks like pure base64?', /^[A-Za-z0-9+/=\s]+$/.test(csvText));
+              
+              try {
+                const decoded = atob(csvText);
+                console.log('✅ Content decoded as pure base64 (first 500 chars):', decoded.substring(0, 500));
+                console.log('📊 Decoded length:', decoded.length);
+              } catch (e) {
+                console.error('❌ Error decoding as pure base64:', e);
+                console.log('📄 Trying as plain text...');
+                console.log('📄 Plain text (first 500 chars):', csvText.substring(0, 500));
+              }
+            }
+          }
+          
+        } catch (error) {
+          console.error('❌ Test error:', error);
+        }
+      };
     </script>
   </body>
 </html>
