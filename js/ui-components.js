@@ -85,17 +85,27 @@ const UIComponents = {
           </div>
         </div>
         
-        <button class="view-directions-btn" onclick="UIComponents.openDirections('${this.escapeHtml(program.address)}, ${this.escapeHtml(program.city)}, ${this.escapeHtml(program.state)} ${this.escapeHtml(program.zip)}')">
+        <button class="view-directions-btn" onclick="UIComponents.openDirectionsPage('${this.escapeHtml(program.programType)}', '${this.escapeHtml(program.address)}', '${this.escapeHtml(program.city)}', '${this.escapeHtml(program.state)}', '${this.escapeHtml(program.zip)}', ${program.coordinates ? program.coordinates[1] : 0}, ${program.coordinates ? program.coordinates[0] : 0})">
           View Directions
         </button>
       </div>
     `;
   },
 
-  // Open directions in Google Maps
-  openDirections(address) {
-    const encodedAddress = encodeURIComponent(address);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+  // Open directions page in new tab
+  openDirectionsPage(name, address, city, state, zip, lat, lng) {
+    const params = new URLSearchParams({
+      name: name,
+      address: address,
+      city: city,
+      state: state,
+      zip: zip,
+      lat: lat,
+      lng: lng
+    });
+    
+    const directionsUrl = `directions.html?${params.toString()}`;
+    window.open(directionsUrl, '_blank');
   },
 
   // Show search suggestions

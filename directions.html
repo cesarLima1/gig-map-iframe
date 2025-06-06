@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Girls in Gear - Directions</title>
+
+    <!-- External Libraries -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css"
+      type="text/css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Local Stylesheets -->
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/directions.css" />
+  </head>
+  <body>
+    <!-- TOP HEADER SECTION -->
+    <div class="header">
+      <h1 class="header-title">Directions to Girls in Gear Program</h1>
+      <div class="header-controls">
+        <button class="back-button" onclick="window.close()">← Back to Map</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-container directions-layout">
+      <!-- LEFT SIDEBAR - DIRECTIONS PANEL -->
+      <div class="directions-sidebar">
+        <div class="destination-info">
+          <h3>Destination</h3>
+          <div class="destination-details">
+            <div class="destination-name" id="destination-name">Loading...</div>
+            <div class="destination-address" id="destination-address">Loading...</div>
+          </div>
+        </div>
+
+        <div class="origin-section">
+          <h3>Starting Point</h3>
+          <p class="instruction-text">Search for a location or click on the map to set your starting point</p>
+          <div id="geocoder" class="geocoder-container"></div>
+        </div>
+
+        <div class="directions-panel" id="directions-panel">
+          <div class="directions-placeholder">
+            <div class="placeholder-icon">🗺️</div>
+            <p>Select a starting point to see directions</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE - MAP -->
+      <div class="map-container">
+        <div id="directions-map"></div>
+      </div>
+    </div>
+
+    <!-- Local JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/directions-controller.js"></script>
+  </body>
+</html>
