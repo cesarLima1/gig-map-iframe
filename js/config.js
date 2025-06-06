@@ -26,73 +26,8 @@ const GIG_CONFIG = {
   SEARCH_MIN_CHARACTERS: 2,
   MAX_SEARCH_SUGGESTIONS: 5,
   
-  // Sample Data (fallback)
-  SAMPLE_DATA: [
-    {
-      id: 1,
-      programType: 'Pedal Power',
-      address: 'Bernardsville Municipal Pool 141 Seney Drive',
-      address2: '',
-      city: 'Bernardsville',
-      state: 'NJ',
-      zip: '07924',
-      ageRange: '5-7',
-      meetingDay: 'Sunday',
-      meetingTime: '9:00-10:30am',
-      region: 'Raritan New Jersey',
-      registrationStatus: 'Register Now',
-      acceptingVolunteers: 'Coach',
-      coordinates: null
-    },
-    {
-      id: 2,
-      programType: 'Pedal Power',
-      address: 'Bernardsville Municipal Pool 141 Seney Drive',
-      address2: '',
-      city: 'Bernardsville',
-      state: 'NJ',
-      zip: '07924',
-      ageRange: '8-10',
-      meetingDay: 'Sunday',
-      meetingTime: '9:00-10:30am',
-      region: 'Raritan New Jersey',
-      registrationStatus: 'Register Now',
-      acceptingVolunteers: 'Coach',
-      coordinates: null
-    },
-    {
-      id: 3,
-      programType: 'Camp GiG',
-      address: 'Blue Ridge Cyclery at Libbie Mill 5001 Libbie Mill E Blvd',
-      address2: '',
-      city: 'Richmond',
-      state: 'VA',
-      zip: '23230',
-      ageRange: '11+',
-      meetingDay: '6/9/2025-6/13/2025',
-      meetingTime: '9-1pm',
-      region: 'Greater Richmond',
-      registrationStatus: 'Register Now',
-      acceptingVolunteers: 'Coach',
-      coordinates: null
-    },
-    {
-      id: 4,
-      programType: 'Camp GiG',
-      address: 'Blue Ridge Cyclery at Libbie Mill 5001 Libbie Mill E Blvd',
-      address2: '',
-      city: 'Richmond',
-      state: 'VA',
-      zip: '23230',
-      ageRange: '11+',
-      meetingDay: '6/16/2025-6/20/2025',
-      meetingTime: '9-1pm',
-      region: 'Greater Richmond',
-      registrationStatus: 'Register Now',
-      acceptingVolunteers: 'Coach',
-      coordinates: null
-    }
-  ]
+  // Data fallback (empty - data must come from Google Sheets)
+  SAMPLE_DATA: []
 };
 
 // Global variables

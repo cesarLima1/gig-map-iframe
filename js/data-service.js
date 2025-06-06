@@ -179,16 +179,15 @@ const DataService = {
         try {
           rawData = await this.fetchGoogleSheetData();
         } catch (error) {
-          console.warn('⚠️ Error loading Google Sheet, using sample data:', error);
-          rawData = GIG_CONFIG.SAMPLE_DATA;
-          useSheetData = false;
+          console.error('❌ Error loading Google Sheet data:', error);
+          throw new Error('Failed to load data from Google Sheet. Please check your connection and try again.');
         }
       } else {
-        rawData = GIG_CONFIG.SAMPLE_DATA;
+        throw new Error('No data source available');
       }
 
       // Process data
-      const processedData = useSheetData ? this.processSheetData(rawData) : rawData;
+      const processedData = this.processSheetData(rawData);
 
       // Geocode addresses
       const geocodedData = await GeocodingService.geocodeAllData(processedData);
@@ -206,6 +205,7 @@ const DataService = {
 
       // Fallback to sample data
       if (useSheetData) {
+        console.log('🔄 Trying with sample data...');
         return await this.loadGigData(false);
       }
 
@@ -243,7 +243,6 @@ const DataService = {
 // Export utility functions to window for debugging
 window.DataService = DataService;
 window.reloadData = () => DataService.loadGigData(true);
-window.useSampleData = () => DataService.loadGigData(false);
 
 window.exportData = function () {
   const dataStr = JSON.stringify(globalGigData, null, 2);

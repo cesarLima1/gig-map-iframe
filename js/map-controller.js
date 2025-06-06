@@ -34,7 +34,7 @@ const MapController = {
         UIComponents.showSuccess('Map data loaded successfully!', 'Ready');
       } catch (error) {
         console.error('❌ Critical error loading data:', error);
-        UIComponents.showError('Error loading map data. Using sample data.', 'Loading Error');
+        UIComponents.showError('Error loading map data. Please check your connection and try again.', 'Loading Error');
       }
     });
 

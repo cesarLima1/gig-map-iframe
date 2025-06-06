@@ -65,7 +65,6 @@ Central configuration file containing:
 - Mapbox access tokens and styles
 - Google Sheets URLs and CORS proxies
 - Default map settings
-- Sample data for testing
 
 ### `js/data-service.js`
 
