@@ -4,7 +4,6 @@ const GigMapApp = {
   // Application initialization
   async initialize() {
     try {
-      console.log('🚀 Initializing Girls in Gear Map Application...');
 
       // Initialize UI components and event listeners
       this.initializeUI();
@@ -15,8 +14,6 @@ const GigMapApp = {
       // Initialize the map
       MapController.initializeMap();
 
-      console.log('✅ Application initialized successfully');
-
     } catch (error) {
       console.error('❌ Error initializing application:', error);
       UIComponents.showError('Failed to initialize application. Please refresh the page.', 'Initialization Error');
@@ -25,7 +22,6 @@ const GigMapApp = {
 
   // Initialize UI components
   initializeUI() {
-    console.log('🎨 Initializing UI components...');
 
     // Set up UI event listeners
     UIComponents.initializeEventListeners();
@@ -89,7 +85,6 @@ const GigMapApp = {
   // Reload application data
   async reloadData() {
     try {
-      console.log('🔄 Reloading application data...');
       UIComponents.showSuccess('Reloading data...', 'Please Wait');
       
       await DataService.loadGigData(true);
@@ -103,7 +98,6 @@ const GigMapApp = {
   // Export application data
   exportData() {
     try {
-      console.log('📤 Exporting application data...');
       
       const exportData = {
         timestamp: new Date().toISOString(),
@@ -152,7 +146,6 @@ const GigMapApp = {
     };
 
     console.table(info.status);
-    console.log('📋 Application Info:', info);
     
     return info;
   }
@@ -198,7 +191,6 @@ window.debug = {
   reset: () => {
     globalGigData = [];
     SearchController.resetMap();
-    console.log('🔄 Application reset complete');
   },
   
   // Get all loaded program data
@@ -210,48 +202,22 @@ window.debug = {
   // Test geocoding
   testGeocode: async (address) => {
     const result = await GeocodingService.geocodeAddress(address, '', '', '');
-    console.log('📍 Geocoding result:', result);
     return result;
   },
   
   // Test search
   testSearch: async (query) => {
     const results = await GeocodingService.getLocationSuggestions(query);
-    console.log('🔍 Search results:', results);
     return results;
   },
   
   // Show all available debug commands
   help: () => {
-    console.log(`
-🛠️ Debug Commands Available:
-- debug.status() - Get application status
-- debug.info() - Get detailed application info
-- debug.reload() - Reload all data
-- debug.export() - Export current data
-- debug.reset() - Reset application
-- debug.data() - Get all program data
-- debug.map() - Get map instance
-- debug.testGeocode(address) - Test geocoding
-- debug.testSearch(query) - Test search
-- debug.help() - Show this help
 
-📊 Data Access:
-- globalGigData - All program data
-- GIG_CONFIG - Configuration settings
-
-🏗️ Modules:
-- DataService - Data fetching and processing
-- GeocodingService - Location services
-- UIComponents - UI manipulation
-- MapController - Map management
-- SearchController - Search functionality
-- GigMapApp - Main application
-    `);
   }
 };
 
 // Show debug info on startup (development only)
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  console.log('🛠️ Development mode detected. Type debug.help() for available commands.');
+  
 } 

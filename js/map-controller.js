@@ -28,7 +28,6 @@ const MapController = {
   setupMapEvents() {
     // Map load event
     this.map.on('load', async () => {
-      console.log('🗺️ Map loaded, starting data loading...');
 
       try {
         await DataService.loadGigData(true);
@@ -41,7 +40,6 @@ const MapController = {
 
     // Map click events for debugging
     this.map.on('click', (e) => {
-      console.log('📍 Map clicked at:', e.lngLat.lng, e.lngLat.lat);
       
       // Close all popups when clicking on empty map area
       // This ensures only one popup is open at a time
@@ -78,7 +76,6 @@ const MapController = {
     const visiblePrograms = this.getVisiblePrograms();
     UIComponents.updateLocationsList(visiblePrograms);
     
-    console.log(`👁️ Viewport update: ${visiblePrograms.length}/${this.allPrograms.length} programs visible`);
   },
 
   // Get programs that are currently visible in the map viewport
@@ -112,8 +109,6 @@ const MapController = {
 
     // Filter data with valid coordinates
     const validData = data.filter((program) => program.coordinates);
-
-    console.log(`📍 Adding ${validData.length} markers to map`);
 
     validData.forEach((program) => {
       this.addMarker(program);
@@ -396,7 +391,6 @@ const MapController = {
     if (markerData && markerData.marker) {
       // Open the popup for this marker
       markerData.marker.togglePopup();
-      console.log('📍 Opened popup for:', targetProgram.programType);
     } else {
       console.warn('⚠️ Could not find marker for program:', targetProgram.programType);
     }

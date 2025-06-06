@@ -76,7 +76,7 @@ const UIComponents = {
         <div class="popup-contact-info">
           <div class="popup-contact-item">
             <span class="contact-icon">📞</span>
-            <span class="contact-text">${this.escapeHtml(program.phone || '(907) 306-0789')}</span>
+            <span class="contact-text">${this.escapeHtml(program.phone || '(555) 555-5555')}</span>
           </div>
           
           <div class="popup-contact-item">

@@ -5,7 +5,6 @@ const DataService = {
   async fetchGoogleSheetData() {
     try {
       isLoadingData = true;
-      console.log('📥 Fetching data from Google Sheet...');
 
       // Show loading indicator
       UIComponents.updateLoadingState(true);
@@ -17,7 +16,6 @@ const DataService = {
       for (let i = 0; i < GIG_CONFIG.CORS_PROXIES.length; i++) {
         try {
           const proxyUrl = GIG_CONFIG.CORS_PROXIES[i] + encodeURIComponent(GIG_CONFIG.GOOGLE_SHEET_URL);
-          console.log(`🔄 Trying proxy ${i + 1}/${GIG_CONFIG.CORS_PROXIES.length}...`);
 
           const response = await fetch(proxyUrl);
 
@@ -31,8 +29,6 @@ const DataService = {
           csvText = this.extractCSVFromResponse(data);
 
           if (csvText) {
-            console.log('✅ Data obtained successfully with proxy', i + 1);
-            console.log('📄 Content length:', csvText.length);
             break;
           }
 
@@ -42,7 +38,6 @@ const DataService = {
 
           // If it's not the last proxy, continue
           if (i < GIG_CONFIG.CORS_PROXIES.length - 1) {
-            console.log('🔄 Trying next proxy...');
             continue;
           }
         }
@@ -74,13 +69,11 @@ const DataService = {
 
       // Check if it's a Data URL (data:text/csv;base64,...)
       if (csvText.startsWith('data:')) {
-        console.log('🔄 Detected Data URL, extracting base64...');
         const base64Index = csvText.indexOf('base64,');
         if (base64Index !== -1) {
           const base64Content = csvText.substring(base64Index + 7);
           try {
             csvText = atob(base64Content);
-            console.log('✅ Data URL decoded successfully');
           } catch (e) {
             console.error('❌ Error decoding Data URL base64:', e);
             throw new Error('Error decoding Data URL');
@@ -89,7 +82,6 @@ const DataService = {
       }
       // Check if it looks like pure base64
       else if (csvText && !csvText.includes(',') && /^[A-Za-z0-9+/=]+$/.test(csvText.replace(/\s/g, ''))) {
-        console.log('🔄 Detected pure base64 content, decoding...');
         try {
           csvText = atob(csvText);
         } catch (e) {
@@ -138,7 +130,6 @@ const DataService = {
             reject(new Error('Error parsing CSV data'));
             return;
           }
-          console.log('✅ Data parsed successfully:', results.data.length, 'rows');
           resolve(results.data);
         },
         error: function (error) {
@@ -151,7 +142,6 @@ const DataService = {
 
   // Process and normalize sheet data
   processSheetData(rawData) {
-    console.log('🔄 Processing data...');
 
     return rawData
       .map((row, index) => {
@@ -206,8 +196,6 @@ const DataService = {
       // Store in global variable
       globalGigData = geocodedData;
 
-      console.log('🎉 Data loaded successfully:', globalGigData.length, 'programs');
-
       // Update UI
       UIComponents.updateLocationsList(globalGigData);
       MapController.updateMapMarkers(globalGigData);
@@ -218,7 +206,6 @@ const DataService = {
 
       // Fallback to sample data
       if (useSheetData) {
-        console.log('🔄 Trying with sample data...');
         return await this.loadGigData(false);
       }
 
@@ -248,7 +235,6 @@ const DataService = {
     });
 
     UIComponents.updateLocationsList(filtered);
-    console.log(`🔍 Search "${query}": ${filtered.length} results`);
     return filtered;
   }
 };
@@ -260,7 +246,6 @@ window.reloadData = () => DataService.loadGigData(true);
 window.useSampleData = () => DataService.loadGigData(false);
 
 window.exportData = function () {
-  console.log('📤 Current data:', globalGigData);
   const dataStr = JSON.stringify(globalGigData, null, 2);
   const dataBlob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(dataBlob);
@@ -271,8 +256,4 @@ window.exportData = function () {
 };
 
 window.getSheetInfo = function () {
-  console.log('📋 Google Sheet Information:');
-  console.log('🔗 Original URL:', GIG_CONFIG.GOOGLE_SHEET_URL);
-  console.log('📊 Data loaded:', globalGigData.length, 'programs');
-  console.log('🗺️ With coordinates:', globalGigData.filter((d) => d.coordinates).length);
 }; 

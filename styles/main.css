@@ -365,6 +365,10 @@ body {
 
 /* ===== MAP POPUP STYLING ===== */
 /* ===== MAP POPUP STYLING ===== */
+.mapboxgl-popup {
+  z-index: 10 !important;
+}
+
 .mapboxgl-popup-content {
   background: white;
   border-radius: 12px !important;
@@ -374,6 +378,7 @@ body {
   min-width: 280px;
   max-width: 320px;
   font-family: 'Montserrat', sans-serif;
+  z-index: 10 !important;
 }
 
 /* Remove the popup arrow/tip */

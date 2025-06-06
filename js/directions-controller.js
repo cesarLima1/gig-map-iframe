@@ -11,7 +11,6 @@ const DirectionsController = {
 
   // Initialize the directions page
   init() {
-    console.log('🚀 DirectionsController.init() started');
     
     try {
       this.parseURLParameters();
@@ -19,7 +18,6 @@ const DirectionsController = {
       this.setupGeocoder();
       this.updateDestinationInfo();
       
-      console.log('✅ DirectionsController initialized successfully');
     } catch (error) {
       console.error('❌ Error during DirectionsController initialization:', error);
     }
@@ -39,7 +37,6 @@ const DirectionsController = {
       lng: parseFloat(params.get('lng')) || 0
     };
 
-    console.log('🎯 Destination loaded:', this.destination);
   },
 
   // Initialize the map
@@ -51,9 +48,6 @@ const DirectionsController = {
       ? [this.destination.lng, this.destination.lat]
       : GIG_CONFIG.DEFAULT_CENTER;
 
-    console.log('🗺️ Initializing map with center:', center);
-    console.log('🎯 Destination coordinates:', this.destination.lat, this.destination.lng);
-
     this.map = new mapboxgl.Map({
       container: 'directions-map',
       style: GIG_CONFIG.MAPBOX_STYLE,
@@ -62,7 +56,6 @@ const DirectionsController = {
     });
 
     this.map.on('load', () => {
-      console.log('🗺️ Map loaded successfully');
       this.addDestinationMarker();
       this.setupMapClickHandler();
     });
@@ -74,7 +67,6 @@ const DirectionsController = {
 
   // Add destination marker to the map
   addDestinationMarker() {
-    console.log('📍 Attempting to add destination marker...');
     
     if (!this.destination.lat || !this.destination.lng || this.destination.lat === 0 || this.destination.lng === 0) {
       console.warn('⚠️ Invalid or missing destination coordinates:', this.destination.lat, this.destination.lng);
@@ -92,7 +84,6 @@ const DirectionsController = {
         .setLngLat([this.destination.lng, this.destination.lat])
         .addTo(this.map);
 
-      console.log('✅ Destination marker added successfully at:', [this.destination.lng, this.destination.lat]);
     } catch (error) {
       console.error('❌ Error adding destination marker:', error);
     }
@@ -176,7 +167,6 @@ const DirectionsController = {
 
   // Set up geocoder for searching starting locations
   setupGeocoder() {
-    console.log('🔍 Setting up geocoder...');
     
     try {
       this.geocoder = new MapboxGeocoder({
@@ -199,14 +189,12 @@ const DirectionsController = {
 
       // Handle geocoder result selection
       this.geocoder.on('result', (e) => {
-        console.log('🔍 Geocoder result selected:', e.result.place_name);
         const coordinates = e.result.geometry.coordinates;
         const placeName = e.result.place_name;
         
         this.setOrigin(coordinates[0], coordinates[1], placeName, true);
       });
 
-      console.log('✅ Geocoder setup complete');
     } catch (error) {
       console.error('❌ Error setting up geocoder:', error);
     }
@@ -289,7 +277,6 @@ const DirectionsController = {
     // Get directions
     this.getDirections();
 
-    console.log('🚀 Origin set:', this.origin);
   },
 
   // Get directions from Mapbox Directions API
@@ -362,7 +349,6 @@ const DirectionsController = {
       }
     });
 
-    console.log('🗺️ Route displayed on map');
   },
 
   // Display turn-by-turn directions in sidebar
@@ -398,7 +384,6 @@ const DirectionsController = {
       </div>
     `;
 
-    console.log('📋 Directions displayed in sidebar');
   },
 
   // Fit map to show entire route
@@ -464,7 +449,6 @@ const DirectionsController = {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('📄 DOM Content Loaded - Starting DirectionsController');
   
   // Add a small delay to ensure all resources are loaded
   setTimeout(() => {

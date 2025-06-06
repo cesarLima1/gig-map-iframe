@@ -169,7 +169,6 @@ const SearchController = {
     const nearbyMarkers = MapController.findNearbyMarkers([lng, lat], 25); // 25 mile radius
     
     if (nearbyMarkers.length > 0) {
-      console.log(`📍 Found ${nearbyMarkers.length} programs within 25 miles`);
       
       // Filter and display nearby programs in sidebar
       const nearbyPrograms = nearbyMarkers.map(({ program }) => program);
@@ -180,7 +179,6 @@ const SearchController = {
         'Programs Found'
       );
     } else {
-      console.log('📍 No programs found within 25 miles');
       UIComponents.showError('No programs found within 25 miles of this location', 'No Results');
     }
   },

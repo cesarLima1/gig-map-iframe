@@ -22,7 +22,6 @@ const GeocodingService = {
 
       if (data.features && data.features.length > 0) {
         const coordinates = data.features[0].center; // [lng, lat]
-        console.log(`✅ Geocoded: ${fullAddress} -> [${coordinates[0]}, ${coordinates[1]}]`);
         return coordinates;
       } else {
         console.warn(`⚠️ No coordinates found for: ${fullAddress}`);
@@ -36,8 +35,6 @@ const GeocodingService = {
 
   // Geocode all data with rate limiting
   async geocodeAllData(data) {
-    console.log('🗺️ Processing coordinates for', data.length, 'locations...');
-
     const geocodedData = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -48,10 +45,8 @@ const GeocodingService = {
       // First, try to use existing latitude and longitude
       if (item.latitude && item.longitude && item.latitude !== null && item.longitude !== null) {
         coordinates = [parseFloat(item.longitude), parseFloat(item.latitude)]; // [lng, lat] format for Mapbox
-        console.log(`✅ Using existing coordinates: ${item.address || item.city} -> [${coordinates[0]}, ${coordinates[1]}]`);
       } else {
         // Fallback to geocoding if coordinates are not available
-        console.log(`🔍 Geocoding required for: ${item.address || item.city}`);
         
         // Add small delay to avoid rate limits when geocoding
         if (i > 0) {
@@ -68,10 +63,8 @@ const GeocodingService = {
 
       // Update progress
       const progress = Math.round(((i + 1) / data.length) * 100);
-      console.log(`📍 Processing progress: ${progress}% (${i + 1}/${data.length})`);
     }
 
-    console.log('✅ Coordinate processing completed');
     return geocodedData;
   },
 
