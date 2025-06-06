@@ -52,12 +52,9 @@ const UIComponents = {
 
     // Add click event
     locationItem.addEventListener('click', () => {
-      if (program.coordinates && window.map) {
-        window.map.flyTo({
-          center: program.coordinates,
-          zoom: GIG_CONFIG.FOCUSED_ZOOM,
-          duration: 1000
-        });
+      if (program.coordinates && MapController) {
+        // Use the new combined method to fly to location and open popup
+        MapController.flyToLocationAndOpenPopup(program);
       }
     });
 
@@ -243,13 +240,26 @@ const UIComponents = {
     if (searchInput) {
       // Real-time search for programs
       searchInput.addEventListener('input', (e) => {
-        DataService.searchPrograms(e.target.value);
+        const query = e.target.value.trim();
+        if (query) {
+          DataService.searchPrograms(query);
+        } else {
+          // Clear search when input is empty
+          if (SearchController && SearchController.clearSearch) {
+            SearchController.clearSearch();
+          }
+        }
       });
 
       // Enter key for search
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-          DataService.searchPrograms(e.target.value);
+          const query = e.target.value.trim();
+          if (query) {
+            DataService.searchPrograms(query);
+          } else {
+            SearchController.clearSearch();
+          }
         }
       });
     }

@@ -4,6 +4,7 @@ const SearchController = {
   currentSearchMarker: null,
   selectedSuggestionIndex: -1,
   searchTimeout: null,
+  isSearchActive: false, // Track if search is currently active
 
   // Initialize search functionality
   initialize() {
@@ -32,6 +33,12 @@ const SearchController = {
     // Clear previous timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
+    }
+
+    // Check if search is being cleared
+    if (!query.trim()) {
+      this.clearSearch();
+      return;
     }
 
     // Debounce the search to avoid too many API calls
@@ -105,6 +112,9 @@ const SearchController = {
 
   // Go to specific location on map
   goToLocation(lng, lat, placeName) {
+    // Set search as active to prevent viewport filtering
+    this.isSearchActive = true;
+
     // Remove previous search marker if exists
     this.removeSearchMarker();
 
@@ -189,11 +199,16 @@ const SearchController = {
     // Reset map view
     MapController.resetMap();
 
-    // Reset search results - show all programs
-    UIComponents.updateLocationsList(globalGigData);
+    // Clear search state
+    this.isSearchActive = false;
 
     // Reset selected suggestion index
     this.selectedSuggestionIndex = -1;
+
+    // Trigger viewport update after reset
+    setTimeout(() => {
+      MapController.updateSidebarForViewport();
+    }, 100);
   },
 
   // Clear search
@@ -205,8 +220,14 @@ const SearchController = {
     UIComponents.hideSuggestions();
     this.selectedSuggestionIndex = -1;
     
-    // Show all programs again
-    UIComponents.updateLocationsList(globalGigData);
+    // Clear search state
+    this.isSearchActive = false;
+    
+    // Remove search marker
+    this.removeSearchMarker();
+    
+    // Resume viewport filtering
+    MapController.updateSidebarForViewport();
   },
 
   // Get current search query
@@ -221,6 +242,11 @@ const SearchController = {
     if (searchInput) {
       searchInput.value = query;
     }
+  },
+
+  // Check if search is currently active
+  isSearchCurrentlyActive() {
+    return this.isSearchActive;
   }
 };
 

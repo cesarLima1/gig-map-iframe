@@ -3,6 +3,7 @@ const MapController = {
 
   map: null,
   markers: [],
+  allPrograms: [], // Store all programs for viewport filtering
 
   // Initialize the map
   initializeMap() {
@@ -41,6 +42,10 @@ const MapController = {
     // Map click events for debugging
     this.map.on('click', (e) => {
       console.log('📍 Map clicked at:', e.lngLat.lng, e.lngLat.lat);
+      
+      // Close all popups when clicking on empty map area
+      // This ensures only one popup is open at a time
+      this.closeAllPopups();
     });
 
     // Map error handling
@@ -48,10 +53,60 @@ const MapController = {
       console.error('❌ Map error:', e.error);
       UIComponents.showError('Map rendering error occurred.', 'Map Error');
     });
+
+    // Viewport change events for filtering sidebar
+    this.map.on('moveend', () => {
+      this.updateSidebarForViewport();
+    });
+
+    this.map.on('zoomend', () => {
+      this.updateSidebarForViewport();
+    });
+  },
+
+  // Update sidebar based on current viewport
+  updateSidebarForViewport() {
+    if (!this.allPrograms || this.allPrograms.length === 0) {
+      return;
+    }
+
+    // Don't update viewport if search is currently active
+    if (SearchController && SearchController.isSearchCurrentlyActive && SearchController.isSearchCurrentlyActive()) {
+      return;
+    }
+
+    const visiblePrograms = this.getVisiblePrograms();
+    UIComponents.updateLocationsList(visiblePrograms);
+    
+    console.log(`👁️ Viewport update: ${visiblePrograms.length}/${this.allPrograms.length} programs visible`);
+  },
+
+  // Get programs that are currently visible in the map viewport
+  getVisiblePrograms() {
+    if (!this.map || !this.allPrograms) {
+      return [];
+    }
+
+    const bounds = this.map.getBounds();
+    if (!bounds) {
+      return this.allPrograms;
+    }
+
+    return this.allPrograms.filter(program => {
+      if (!program.coordinates) {
+        return false;
+      }
+
+      const [lng, lat] = program.coordinates;
+      return bounds.contains([lng, lat]);
+    });
   },
 
   // Add markers for all programs
   updateMapMarkers(data) {
+    // Store all programs for viewport filtering
+    this.allPrograms = data;
+
     // Clear existing markers
     this.clearMarkers();
 
@@ -68,6 +123,11 @@ const MapController = {
     if (validData.length > 0) {
       this.fitMapToMarkers(validData);
     }
+
+    // Update sidebar for current viewport after a brief delay to ensure map is ready
+    setTimeout(() => {
+      this.updateSidebarForViewport();
+    }, 100);
   },
 
   // Add a single marker to the map
@@ -229,8 +289,103 @@ const MapController = {
   // Check if map is loaded
   isMapLoaded() {
     return this.map && this.map.loaded();
-  }
+  },
+
+  // Force update sidebar for current viewport (public method)
+  forceViewportUpdate() {
+    this.updateSidebarForViewport();
+  },
+
+  // Get viewport statistics for debugging
+  getViewportStats() {
+    const visiblePrograms = this.getVisiblePrograms();
+    const bounds = this.map ? this.map.getBounds() : null;
+    
+    return {
+      totalPrograms: this.allPrograms ? this.allPrograms.length : 0,
+      visiblePrograms: visiblePrograms.length,
+      bounds: bounds ? {
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest()
+      } : null,
+      searchActive: SearchController && SearchController.isSearchCurrentlyActive ? SearchController.isSearchCurrentlyActive() : false
+    };
+  },
+
+  // Close all open popups on the map
+  closeAllPopups() {
+    if (!this.map) return;
+    
+    // Close any popups that might be open
+    const popups = document.querySelectorAll('.mapboxgl-popup');
+    popups.forEach(popup => {
+      popup.remove();
+    });
+  },
+
+  // Find marker by program data
+  findMarkerByProgram(targetProgram) {
+    return this.markers.find(({ program }) => {
+      // Match by coordinates and program type as a unique identifier
+      return program.coordinates && 
+             targetProgram.coordinates &&
+             program.coordinates[0] === targetProgram.coordinates[0] &&
+             program.coordinates[1] === targetProgram.coordinates[1] &&
+             program.programType === targetProgram.programType &&
+             program.address === targetProgram.address;
+    });
+  },
+
+  // Open popup for a specific program
+  openPopupForProgram(targetProgram) {
+    if (!targetProgram || !targetProgram.coordinates) {
+      console.warn('⚠️ Cannot open popup: No coordinates for program');
+      return;
+    }
+
+    // Close all existing popups first
+    this.closeAllPopups();
+
+    // Find the marker for this program
+    const markerData = this.findMarkerByProgram(targetProgram);
+    
+    if (markerData && markerData.marker) {
+      // Open the popup for this marker
+      markerData.marker.togglePopup();
+      console.log('📍 Opened popup for:', targetProgram.programType);
+    } else {
+      console.warn('⚠️ Could not find marker for program:', targetProgram.programType);
+    }
+  },
+
+  // Combined method to fly to location and open popup
+  flyToLocationAndOpenPopup(targetProgram, zoom = GIG_CONFIG.FOCUSED_ZOOM) {
+    if (!targetProgram || !targetProgram.coordinates) {
+      console.warn('⚠️ Cannot fly to location: No coordinates for program');
+      return;
+    }
+
+    // Fly to the location
+    this.flyToLocation(targetProgram.coordinates, zoom);
+
+    // Open popup after a small delay to ensure map has moved
+    setTimeout(() => {
+      this.openPopupForProgram(targetProgram);
+    }, 300);
+  },
 };
 
 // Export for debugging
-window.MapController = MapController; 
+window.MapController = MapController;
+
+// Debug functions for testing viewport filtering
+window.getViewportStats = () => MapController.getViewportStats();
+window.forceViewportUpdate = () => MapController.forceViewportUpdate();
+window.getVisiblePrograms = () => MapController.getVisiblePrograms();
+
+// New popup management functions for debugging
+window.closeAllPopups = () => MapController.closeAllPopups();
+window.openPopupForProgram = (program) => MapController.openPopupForProgram(program);
+window.flyToLocationAndOpenPopup = (program) => MapController.flyToLocationAndOpenPopup(program); 

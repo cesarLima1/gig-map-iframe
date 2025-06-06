@@ -228,8 +228,16 @@ const DataService = {
   // Search programs by query
   searchPrograms(query) {
     if (!query.trim()) {
-      UIComponents.updateLocationsList(globalGigData);
+      // Clear search when query is empty
+      if (SearchController && SearchController.clearSearch) {
+        SearchController.clearSearch();
+      }
       return globalGigData;
+    }
+
+    // Set search as active
+    if (SearchController) {
+      SearchController.isSearchActive = true;
     }
 
     const filtered = globalGigData.filter((program) => {
