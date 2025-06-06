@@ -10,7 +10,8 @@ const GIG_CONFIG = {
   FOCUSED_ZOOM: 12,
   
   // Google Sheets Configuration
-  GOOGLE_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1ygPq1Cfz0zW1pPCvdFB_R4yTh_XmKman7Pv__eVJePM/export?format=csv&gid=719830008',
+  // GOOGLE_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1ygPq1Cfz0zW1pPCvdFB_R4yTh_XmKman7Pv__eVJePM/export?format=csv&gid=719830008',
+  GOOGLE_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1zUQVdXSOtEtWpJ0GQJ7vJRYr_TybpnabaqpSWmvzlcw/export?format=csv&gid=0',
   
   // CORS Proxy URLs (fallback options)
   CORS_PROXIES: [

@@ -36,19 +36,30 @@ const GeocodingService = {
 
   // Geocode all data with rate limiting
   async geocodeAllData(data) {
-    console.log('🗺️ Starting geocoding of', data.length, 'locations...');
+    console.log('🗺️ Processing coordinates for', data.length, 'locations...');
 
     const geocodedData = [];
 
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
 
-      // Add small delay to avoid rate limits
-      if (i > 0) {
-        await new Promise((resolve) => setTimeout(resolve, GIG_CONFIG.SEARCH_DELAY));
+      let coordinates = null;
+      
+      // First, try to use existing latitude and longitude
+      if (item.latitude && item.longitude && item.latitude !== null && item.longitude !== null) {
+        coordinates = [parseFloat(item.longitude), parseFloat(item.latitude)]; // [lng, lat] format for Mapbox
+        console.log(`✅ Using existing coordinates: ${item.address || item.city} -> [${coordinates[0]}, ${coordinates[1]}]`);
+      } else {
+        // Fallback to geocoding if coordinates are not available
+        console.log(`🔍 Geocoding required for: ${item.address || item.city}`);
+        
+        // Add small delay to avoid rate limits when geocoding
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, GIG_CONFIG.SEARCH_DELAY));
+        }
+        
+        coordinates = await this.geocodeAddress(item.address, item.city, item.state, item.zip);
       }
-
-      const coordinates = await this.geocodeAddress(item.address, item.city, item.state, item.zip);
 
       geocodedData.push({
         ...item,
@@ -57,10 +68,10 @@ const GeocodingService = {
 
       // Update progress
       const progress = Math.round(((i + 1) / data.length) * 100);
-      console.log(`📍 Geocoding progress: ${progress}% (${i + 1}/${data.length})`);
+      console.log(`📍 Processing progress: ${progress}% (${i + 1}/${data.length})`);
     }
 
-    console.log('✅ Geocoding completed');
+    console.log('✅ Coordinate processing completed');
     return geocodedData;
   },
 

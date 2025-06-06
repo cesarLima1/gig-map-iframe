@@ -170,7 +170,8 @@ const DataService = {
           region: row.region || row['Region'] || '',
           registrationStatus: row.registrationstatus || row['Registration Status'] || '',
           acceptingVolunteers: row.acceptingvolunteers || row['Accepting Volunteers'] || '',
-          coordinates: null // Will be filled with geocoding
+          latitude: parseFloat(row.latitude || row['Latitude']) || null,
+          longitude: parseFloat(row.longitude || row['Longitude']) || null
         };
 
         return processedRow;
