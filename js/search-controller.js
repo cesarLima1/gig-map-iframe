@@ -251,6 +251,9 @@ const SearchController = {
     // Hide suggestions
     UIComponents.hideSuggestions();
 
+    // Close all popups before resetting map
+    MapController.closeAllPopups();
+
     // Reset map view
     MapController.resetMap();
 
