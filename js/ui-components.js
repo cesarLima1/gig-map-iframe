@@ -67,15 +67,27 @@ const UIComponents = {
   // Create popup HTML for map markers
   createPopupHTML(program) {
     return `
-      <div class="popup-title">${this.escapeHtml(program.programType)}</div>
-      <div class="popup-address">${this.escapeHtml(program.address)}<br>${this.escapeHtml(program.city)}, ${this.escapeHtml(program.state)} ${this.escapeHtml(program.zip)}</div>
-      <div class="popup-contact">📅 ${this.escapeHtml(program.meetingDay)}</div>
-      <div class="popup-contact">⏰ ${this.escapeHtml(program.meetingTime)}</div>
-      <div class="popup-contact">👥 Ages: ${this.escapeHtml(program.ageRange)}</div>
-      <div class="popup-contact">📍 ${this.escapeHtml(program.region)}</div>
-      <button class="view-directions" onclick="UIComponents.openDirections('${this.escapeHtml(program.address)}, ${this.escapeHtml(program.city)}, ${this.escapeHtml(program.state)} ${this.escapeHtml(program.zip)}')">
-        View Directions
-      </button>
+      <div class="map-popup">
+        <div class="popup-title">${this.escapeHtml(program.programType)}</div>
+        <div class="popup-subtitle">${this.escapeHtml(program.region)}</div>
+        <div class="popup-address">${this.escapeHtml(program.address)}, ${this.escapeHtml(program.city)}</div>
+        
+        <div class="popup-contact-info">
+          <div class="popup-contact-item">
+            <span class="contact-icon">📞</span>
+            <span class="contact-text">${this.escapeHtml(program.phone || '(907) 306-0789')}</span>
+          </div>
+          
+          <div class="popup-contact-item">
+            <span class="contact-icon">🌐</span>
+            <span class="contact-text">${this.escapeHtml(program.website || 'www.gotrsouthcentralak.org')}</span>
+          </div>
+        </div>
+        
+        <button class="view-directions-btn" onclick="UIComponents.openDirections('${this.escapeHtml(program.address)}, ${this.escapeHtml(program.city)}, ${this.escapeHtml(program.state)} ${this.escapeHtml(program.zip)}')">
+          View Directions
+        </button>
+      </div>
     `;
   },
 

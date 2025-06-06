@@ -369,55 +369,121 @@ body {
 }
 
 /* ===== MAP POPUP STYLING ===== */
+/* ===== MAP POPUP STYLING ===== */
 .mapboxgl-popup-content {
   background: white;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 2px solid #00bcd4;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  padding: 0 !important;
+  min-width: 280px;
+  max-width: 320px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Remove the popup arrow/tip */
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 18px;
+  padding: 8px;
+  color: #999;
+  right: 8px;
+  top: 8px;
+}
+
+.mapboxgl-popup-close-button:hover {
+  color: #666;
+}
+
+/* Map popup content container */
+.map-popup {
+  font-family: 'Montserrat', sans-serif;
+  background: white;
+  border-radius: 12px;
   padding: 20px;
   min-width: 280px;
+  max-width: 320px;
 }
 
 .popup-title {
-  color: #00bcd4;
+  font-size: 18px;
   font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 10px;
+  color: #00bcd4;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.popup-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .popup-address {
-  color: #666;
   font-size: 14px;
-  margin-bottom: 6px;
+  color: #333;
+  margin-bottom: 16px;
+  line-height: 1.4;
   font-weight: 500;
 }
 
-.popup-contact {
-  color: #666;
-  font-size: 13px;
-  margin-bottom: 12px;
-  font-weight: 500;
+.popup-contact-info {
+  margin-bottom: 20px;
+}
+
+.popup-contact-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-.view-directions {
-  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+.contact-icon {
+  color: #00bcd4;
+  margin-right: 8px;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.contact-text {
+  color: #333;
+  flex: 1;
+  font-weight: 500;
+}
+
+.view-directions-btn {
+  background: #00bcd4;
   color: white;
   border: none;
-  padding: 10px 20px;
   border-radius: 25px;
+  padding: 12px 24px;
   font-size: 14px;
-  cursor: pointer;
   font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  width: 100%;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
 }
 
-.view-directions:hover {
+.view-directions-btn:hover {
+  background: #0097a7;
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 188, 212, 0.4);
+}
+
+/* Legacy popup styles - keep for backward compatibility but override */
+.popup-contact {
+  display: none; /* Hide old contact styling */
+}
+
+.view-directions {
+  display: none; /* Hide old button styling */
 }
 
 /* ===== SCROLLBAR STYLING ===== */
