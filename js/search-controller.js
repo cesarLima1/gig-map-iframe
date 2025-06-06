@@ -76,8 +76,19 @@ const SearchController = {
   // Get search suggestions
   async getSuggestions(query) {
     try {
-      const suggestions = await GeocodingService.getLocationSuggestions(query);
-      UIComponents.showSuggestions(suggestions);
+      // Get geocoded suggestions from Mapbox
+      const geoSuggestions = await GeocodingService.getLocationSuggestions(query);
+      
+      // Get matching programs from sidebar data
+      const programSuggestions = this.getMatchingPrograms(query);
+      
+      // Combine both types of suggestions
+      const combinedSuggestions = {
+        geocoded: geoSuggestions || [],
+        programs: programSuggestions || []
+      };
+      
+      UIComponents.showSuggestions(combinedSuggestions);
       this.selectedSuggestionIndex = -1;
     } catch (error) {
       console.error('❌ Error getting suggestions:', error);
@@ -85,28 +96,71 @@ const SearchController = {
     }
   },
 
+  // Get matching programs from current data
+  getMatchingPrograms(query) {
+    if (!query.trim() || typeof globalGigData === 'undefined' || !globalGigData) {
+      return [];
+    }
+
+    const searchQuery = query.toLowerCase();
+    
+    return globalGigData.filter((program) => {
+      const searchableText = [
+        program.programType,
+        program.address,
+        program.city,
+        program.state,
+        program.region,
+        program.ageRange
+      ].join(' ').toLowerCase();
+      
+      return searchableText.includes(searchQuery);
+    }).slice(0, 5); // Limit to 5 program suggestions
+  },
+
   // Perform location search and go to first result
   async performLocationSearch(query) {
     try {
-      const suggestions = await GeocodingService.getLocationSuggestions(query);
+      // Get both types of suggestions
+      const geoSuggestions = await GeocodingService.getLocationSuggestions(query);
+      const programSuggestions = this.getMatchingPrograms(query);
       
-      if (suggestions && suggestions.length > 0) {
-        const firstResult = suggestions[0];
-        
-        // Update search input
-        document.querySelector('.search-input').value = firstResult.placeName;
-        
-        // Go to location
-        this.goToLocation(firstResult.center[0], firstResult.center[1], firstResult.placeName);
+      // Prioritize geocoded suggestions, then program suggestions
+      let firstResult = null;
+      let searchType = null;
+      
+      if (geoSuggestions && geoSuggestions.length > 0) {
+        firstResult = geoSuggestions[0];
+        searchType = 'geocoded';
+      } else if (programSuggestions && programSuggestions.length > 0) {
+        firstResult = programSuggestions[0];
+        searchType = 'program';
+      }
+      
+      if (firstResult) {
+        if (searchType === 'geocoded') {
+          // Update search input
+          document.querySelector('.search-input').value = firstResult.placeName;
+          
+          // Go to location
+          this.goToLocation(firstResult.center[0], firstResult.center[1], firstResult.placeName);
+        } else if (searchType === 'program') {
+          // Handle program result
+          document.querySelector('.search-input').value = `${firstResult.programType} - ${firstResult.city}, ${firstResult.state}`;
+          
+          if (firstResult.coordinates && MapController && MapController.flyToLocationAndOpenPopup) {
+            MapController.flyToLocationAndOpenPopup(firstResult);
+          }
+        }
         
         // Hide suggestions
         UIComponents.hideSuggestions();
       } else {
-        UIComponents.showError(`No results found for "${query}"`, 'Search Error');
+        UIComponents.showError(`No se encontraron resultados para "${query}"`, 'Error de búsqueda');
       }
     } catch (error) {
       console.error('❌ Error performing location search:', error);
-      UIComponents.showError('Error performing search. Please try again.', 'Search Error');
+      UIComponents.showError('Error al realizar la búsqueda. Por favor, intenta de nuevo.', 'Error de búsqueda');
     }
   },
 
