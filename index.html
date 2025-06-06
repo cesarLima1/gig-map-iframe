@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Girls in Gear - Where are we located?</title>
+
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+
+    <!-- Papa Parse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #e8f5e8 0%, #f0e6ff 100%);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* TOP HEADER SECTION */
+      .header {
+        background: linear-gradient(135deg, #e8f5e8 0%, #f0e6ff 100%);
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(0, 188, 212, 0.1);
+      }
+
+      .header-title {
+        color: #00bcd4;
+        font-size: 48px;
+        font-weight: 800;
+        margin-bottom: 25px;
+        letter-spacing: -1px;
+      }
+
+      .header-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .select-location {
+        background: #00bcd4;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 12px rgba(0, 188, 212, 0.3);
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .select-location:hover {
+        background: #0097a7;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 188, 212, 0.4);
+      }
+
+      .select-location:after {
+        content: '▼';
+        margin-left: 8px;
+        font-size: 10px;
+      }
+
+      .search-container {
+        position: relative;
+        flex: 1;
+        max-width: 280px;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px 15px 12px 45px;
+        border: 2px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 14px;
+        background: white;
+        transition: all 0.2s ease;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: #00bcd4;
+        box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 16px;
+      }
+
+      .reset-button {
+        background: #e0f7fa;
+        color: #00838f;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .reset-button:hover {
+        background: #b2ebf2;
+        transform: translateY(-2px);
+      }
+
+      /* MAIN CONTENT AREA */
+      .main-container {
+        display: flex;
+        height: calc(100vh - 140px);
+        background: white;
+      }
+
+      /* LEFT SIDEBAR - LOCATIONS LIST */
+      .locations-sidebar {
+        width: 380px;
+        background: white;
+        padding: 20px;
+        overflow-y: auto;
+        border-right: 1px solid rgba(0, 188, 212, 0.1);
+      }
+
+      .chapter-info {
+        background: linear-gradient(135deg, #e0f7fa 0%, #f3e5f5 100%);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border-left: 4px solid #00bcd4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .chapter-info-text h3 {
+        color: #00838f;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .chapter-info-text p {
+        color: #555;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .share-icon {
+        color: #00bcd4;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
+      .locations-list {
+        max-height: calc(100vh - 280px);
+        overflow-y: auto;
+        padding-right: 5px;
+      }
+
+      .location-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px 12px;
+        border-bottom: 1px solid rgba(0, 188, 212, 0.08);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 8px;
+        margin-bottom: 4px;
+      }
+
+      .location-item:hover {
+        background: #f8fdff;
+        transform: translateX(4px);
+      }
+
+      .location-icon {
+        width: 36px;
+        height: 36px;
+        background: #00bcd4;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 14px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
+      }
+
+      .location-icon::after {
+        content: '🚲';
+        font-size: 16px;
+      }
+
+      .location-details {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .location-name {
+        color: #00bcd4;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        line-height: 1.3;
+        word-wrap: break-word;
+      }
+
+      .location-address {
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .location-contact {
+        color: #666;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .location-contact::before {
+        content: '📞';
+        margin-right: 6px;
+        font-size: 11px;
+      }
+
+      .location-website {
+        color: #00bcd4;
+        font-size: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+        display: flex;
+        align-items: center;
+      }
+
+      .location-website:hover {
+        color: #0097a7;
+      }
+
+      .location-website::before {
+        content: '🌐';
+        margin-right: 6px;
+        font-size: 11px;
+      }
+
+      .expand-arrow {
+        color: #ccc;
+        font-size: 18px;
+        margin-left: 10px;
+        flex-shrink: 0;
+      }
+
+      /* RIGHT SIDE - MAP */
+      .map-container {
+        flex: 1;
+        position: relative;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* MAP POPUP STYLING */
+      .mapboxgl-popup-content {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        border: 2px solid #00bcd4;
+        padding: 20px;
+        min-width: 280px;
+      }
+
+      .popup-title {
+        color: #00bcd4;
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .popup-address {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+
+      .popup-contact {
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .view-directions {
+        background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
+      }
+
+      .view-directions:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 188, 212, 0.4);
+      }
+
+      /* Scrollbar styling */
+      .locations-sidebar::-webkit-scrollbar,
+      .locations-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .locations-sidebar::-webkit-scrollbar-track,
+      .locations-list::-webkit-scrollbar-track {
+        background: rgba(0, 188, 212, 0.05);
+        border-radius: 3px;
+      }
+
+      .locations-sidebar::-webkit-scrollbar-thumb,
+      .locations-list::-webkit-scrollbar-thumb {
+        background: #00bcd4;
+        border-radius: 3px;
+      }
+
+      .locations-sidebar::-webkit-scrollbar-thumb:hover,
+      .locations-list::-webkit-scrollbar-thumb:hover {
+        background: #0097a7;
+      }
+
+      /* Remove mapbox attribution and controls */
+      .mapboxgl-ctrl-bottom-left,
+      .mapboxgl-ctrl-bottom-right {
+        display: none !important;
+      }
+
+      .mapboxgl-ctrl-top-right .mapboxgl-ctrl-group:not(:first-child) {
+        display: none !important;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
+        .header-title {
+          font-size: 32px;
+        }
+
+        .header-controls {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .search-container {
+          max-width: 100%;
+          width: 100%;
+        }
+
+        .main-container {
+          flex-direction: column;
+        }
+
+        .locations-sidebar {
+          width: 100%;
+          height: 200px;
+          border-right: none;
+          border-bottom: 1px solid rgba(0, 188, 212, 0.1);
+        }
+
+        .locations-list {
+          max-height: 120px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- TOP HEADER SECTION -->
+    <div class="header">
+      <h1 class="header-title">Where are we located?</h1>
+      <div class="header-controls">
+        <button class="select-location">Select Location</button>
+        <div class="search-container">
+          <div class="search-icon">🔍</div>
+          <input type="text" class="search-input" placeholder="Vienna, VA 22181" value="Vienna, VA 22181" />
+        </div>
+        <button class="reset-button">Reset Map</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-container">
+      <!-- LEFT SIDEBAR - LOCATIONS LIST -->
+      <div class="locations-sidebar">
+        <div class="chapter-info">
+          <div class="chapter-info-text">
+            <h3>48 Local Chapters Found</h3>
+            <p>Girls in your area need your support!</p>
+          </div>
+          <div class="share-icon">📤</div>
+        </div>
+
+        <div class="locations-list">
+          <div class="location-item">
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">Girls on the Run Alaska</div>
+              <div class="location-address">Anchorage, Matanuska-Susitna</div>
+              <div class="location-contact">(907) 306-0789</div>
+              <a href="#" class="location-website">www.gotrsouthcentalak.org</a>
+            </div>
+            <div class="expand-arrow">›</div>
+          </div>
+
+          <div class="location-item">
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">Girls on the Run Southcentral Ala...</div>
+              <div class="location-address">Anchorage, Matanuska-Susitna</div>
+              <div class="location-contact">(907) 306-0789</div>
+              <a href="#" class="location-website">www.gotrsouthcentalak.org</a>
+            </div>
+            <div class="expand-arrow">›</div>
+          </div>
+
+          <div class="location-item">
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">Girls on the Run Southcentral Ala...</div>
+              <div class="location-address">Anchorage, Matanuska-Susitna</div>
+              <div class="location-contact">(907) 306-0789</div>
+              <a href="#" class="location-website">www.gotrsouthcentalak.org</a>
+            </div>
+            <div class="expand-arrow">›</div>
+          </div>
+
+          <div class="location-item">
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">Girls on the Run Southcentral Ala...</div>
+              <div class="location-address">Anchorage, Matanuska-Susitna</div>
+              <div class="location-contact">(907) 306-0789</div>
+              <a href="#" class="location-website">www.gotrsouthcentalak.org</a>
+            </div>
+            <div class="expand-arrow">›</div>
+          </div>
+
+          <div class="location-item">
+            <div class="location-icon"></div>
+            <div class="location-details">
+              <div class="location-name">Girls on the Run Southcentral Ala...</div>
+              <div class="location-address">Anchorage, Matanuska-Susitna</div>
+              <div class="location-contact">(907) 306-0789</div>
+              <a href="#" class="location-website">www.gotrsouthcentalak.org</a>
+            </div>
+            <div class="expand-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE - MAP -->
+      <div class="map-container">
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize Mapbox
+      mapboxgl.accessToken =
+        'pk.eyJ1IjoiZ2lybHNpbmdlYXIiLCJhIjoiY2xwcmF1ajNlMDdiOTJpb2xpcjI5dXF3YiJ9.gAAFitjNaaaHyWJ86qdG9A';
+
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/girlsingear/cmbica3mo006k01s6a8in69g5',
+        center: [-98.5795, 39.8283],
+        zoom: 3.5,
+        attributionControl: false
+      });
+
+      // Sample locations for demonstration
+      const sampleLocations = [
+        {
+          name: 'Girls on the Run Southcentral Alaska',
+          address: 'Anchorage, Matanuska-Susitna',
+          phone: '(907) 306-0789',
+          website: 'www.gotrsouthcentalak.org',
+          coordinates: [-149.9003, 61.2181]
+        },
+        {
+          name: 'Girls on the Run Alaska',
+          address: 'Anchorage, Matanuska-Susitna',
+          phone: '(907) 306-0789',
+          website: 'www.gotrsouthcentalak.org',
+          coordinates: [-149.8003, 61.1181]
+        }
+      ];
+
+      map.on('load', function () {
+        // Add sample markers
+        sampleLocations.forEach((location) => {
+          // Create popup
+          const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                        <div class="popup-title">${location.name}</div>
+                        <div class="popup-address">${location.address}</div>
+                        <div class="popup-contact">📞 ${location.phone}</div>
+                        <div class="popup-contact">🌐 ${location.website}</div>
+                        <button class="view-directions">View Directions</button>
+                    `);
+
+          // Create marker
+          const marker = new mapboxgl.Marker({
+            color: '#00BCD4'
+          })
+            .setLngLat(location.coordinates)
+            .setPopup(popup)
+            .addTo(map);
+        });
+      });
+
+      // Reset map functionality
+      document.querySelector('.reset-button').addEventListener('click', function () {
+        map.flyTo({
+          center: [-98.5795, 39.8283],
+          zoom: 3.5,
+          duration: 1000
+        });
+      });
+
+      // Search functionality placeholder
+      document.querySelector('.search-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          // Implement search functionality here
+          console.log('Search for:', this.value);
+        }
+      });
+
+      // Location item click functionality
+      document.querySelectorAll('.location-item').forEach((item) => {
+        item.addEventListener('click', function () {
+          // Implement location selection here
+          console.log('Selected location:', this.querySelector('.location-name').textContent);
+        });
+      });
+    </script>
+  </body>
+</html>
