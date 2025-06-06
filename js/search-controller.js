@@ -4,7 +4,6 @@ const SearchController = {
   currentSearchMarker: null,
   selectedSuggestionIndex: -1,
   searchTimeout: null,
-  isSearchActive: false, // Track if search is currently active
 
   // Initialize search functionality
   initialize() {
@@ -98,13 +97,22 @@ const SearchController = {
 
   // Get matching programs from current data
   getMatchingPrograms(query) {
-    if (!query.trim() || typeof globalGigData === 'undefined' || !globalGigData) {
+    if (!query.trim()) {
+      return [];
+    }
+
+    // Get only programs visible in current viewport
+    const visiblePrograms = MapController && MapController.getVisiblePrograms ? 
+      MapController.getVisiblePrograms() : 
+      (typeof globalGigData !== 'undefined' ? globalGigData : []);
+
+    if (!visiblePrograms || visiblePrograms.length === 0) {
       return [];
     }
 
     const searchQuery = query.toLowerCase();
     
-    return globalGigData.filter((program) => {
+    return visiblePrograms.filter((program) => {
       const searchableText = [
         program.programType,
         program.address,
@@ -166,9 +174,6 @@ const SearchController = {
 
   // Go to specific location on map
   goToLocation(lng, lat, placeName) {
-    // Set search as active to prevent viewport filtering
-    this.isSearchActive = true;
-
     // Remove previous search marker if exists
     this.removeSearchMarker();
 
@@ -229,9 +234,6 @@ const SearchController = {
     // Reset map view
     MapController.resetMap();
 
-    // Clear search state
-    this.isSearchActive = false;
-
     // Reset selected suggestion index
     this.selectedSuggestionIndex = -1;
 
@@ -250,14 +252,11 @@ const SearchController = {
     UIComponents.hideSuggestions();
     this.selectedSuggestionIndex = -1;
     
-    // Clear search state
-    this.isSearchActive = false;
-    
     // Remove search marker
     this.removeSearchMarker();
     
-    // Resume viewport filtering
-    MapController.updateSidebarForViewport();
+    // Sidebar is always controlled by viewport filtering only
+    // No need to explicitly update it here as it's handled by map events
   },
 
   // Get current search query
@@ -276,7 +275,7 @@ const SearchController = {
 
   // Check if search is currently active
   isSearchCurrentlyActive() {
-    return this.isSearchActive;
+    return false; // Always return false since viewport filtering is always active
   }
 };
 

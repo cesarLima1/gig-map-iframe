@@ -68,11 +68,7 @@ const MapController = {
       return;
     }
 
-    // Don't update viewport if search is currently active
-    if (SearchController && SearchController.isSearchCurrentlyActive && SearchController.isSearchCurrentlyActive()) {
-      return;
-    }
-
+    // Always update viewport - removed the search active check
     const visiblePrograms = this.getVisiblePrograms();
     UIComponents.updateLocationsList(visiblePrograms);
     

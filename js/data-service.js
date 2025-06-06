@@ -211,31 +211,6 @@ const DataService = {
 
       throw error;
     }
-  },
-
-  // Search programs by query
-  searchPrograms(query) {
-    if (!query.trim()) {
-      // Clear search when query is empty
-      if (SearchController && SearchController.clearSearch) {
-        SearchController.clearSearch();
-      }
-      return globalGigData;
-    }
-
-    // Set search as active
-    if (SearchController) {
-      SearchController.isSearchActive = true;
-    }
-
-    const filtered = globalGigData.filter((program) => {
-      const searchText =
-        `${program.programType} ${program.address} ${program.city} ${program.state} ${program.region} ${program.ageRange}`.toLowerCase();
-      return searchText.includes(query.toLowerCase());
-    });
-
-    UIComponents.updateLocationsList(filtered);
-    return filtered;
   }
 };
 

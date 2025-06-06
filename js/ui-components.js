@@ -331,28 +331,28 @@ const UIComponents = {
     // Search input events
     const searchInput = document.querySelector('.search-input');
     if (searchInput) {
-      // Real-time search for programs
+      // Search input is for suggestions only - does not affect sidebar
       searchInput.addEventListener('input', (e) => {
         const query = e.target.value.trim();
-        if (query) {
-          DataService.searchPrograms(query);
-        } else {
+        if (!query) {
           // Clear search when input is empty
           if (SearchController && SearchController.clearSearch) {
             SearchController.clearSearch();
           }
         }
+        // Note: Search suggestions are handled by SearchController, not here
       });
 
       // Enter key for search
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           const query = e.target.value.trim();
-          if (query) {
-            DataService.searchPrograms(query);
-          } else {
-            SearchController.clearSearch();
+          if (!query) {
+            if (SearchController && SearchController.clearSearch) {
+              SearchController.clearSearch();
+            }
           }
+          // Note: Search navigation is handled by SearchController, not here
         }
       });
     }
@@ -361,10 +361,8 @@ const UIComponents = {
     const searchIcon = document.querySelector('.search-icon');
     if (searchIcon) {
       searchIcon.addEventListener('click', () => {
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput && searchInput.value.trim()) {
-          DataService.searchPrograms(searchInput.value);
-        }
+        // Search icon click is handled by SearchController for suggestions
+        // It does not affect the sidebar list
       });
     }
 
