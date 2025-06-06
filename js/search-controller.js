@@ -177,19 +177,11 @@ const SearchController = {
 
     // Add a new search marker
     this.addSearchMarker(lng, lat, placeName);
-
-    // Find and highlight nearby programs
-    this.highlightNearbyPrograms(lng, lat);
   },
 
   // Add search marker to map
   addSearchMarker(lng, lat, placeName) {
     try {
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="popup-title">Search Result</div>
-        <div class="popup-address">${UIComponents.escapeHtml(placeName)}</div>
-      `);
-
       // Create custom search marker element with bicycle icon
       const markerElement = MapController.createCustomMarkerElement(true);
 
@@ -197,7 +189,6 @@ const SearchController = {
         element: markerElement
       })
         .setLngLat([lng, lat])
-        .setPopup(popup)
         .addTo(MapController.getMap());
 
       // Remove the search marker after timeout
@@ -215,25 +206,6 @@ const SearchController = {
     if (this.currentSearchMarker) {
       this.currentSearchMarker.remove();
       this.currentSearchMarker = null;
-    }
-  },
-
-  // Highlight programs near the searched location
-  highlightNearbyPrograms(lng, lat) {
-    const nearbyMarkers = MapController.findNearbyMarkers([lng, lat], 25); // 25 mile radius
-    
-    if (nearbyMarkers.length > 0) {
-      
-      // Filter and display nearby programs in sidebar
-      const nearbyPrograms = nearbyMarkers.map(({ program }) => program);
-      UIComponents.updateLocationsList(nearbyPrograms);
-      
-      UIComponents.showSuccess(
-        `Found ${nearbyPrograms.length} programs near your search location`,
-        'Programs Found'
-      );
-    } else {
-      UIComponents.showError('No programs found within 25 miles of this location', 'No Results');
     }
   },
 
